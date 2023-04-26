@@ -1,0 +1,32 @@
+import boto3
+
+# Definir o cliente do boto3 para o Amazon EC2
+ec2 = boto3.client('ec2')
+
+# Definir o valor da AMI desejada
+ami_id = 'AMI_ID'
+
+# Definir a tag que será adicionada nas instâncias
+nova_tag = {'Key': 'Nome_da_tag', 'Value': 'Valor_da_tag'}
+
+# Definir o filtro para encontrar as instâncias que têm uma AMI diferente da AMI desejada
+filtro_instancias = [
+    {
+        'Name': 'image-id',
+        'Values': [ami_id],
+        'Operator': 'ne'
+    },
+    {
+        'Name': 'instance-state-name',
+        'Values': ['running', 'stopped', 'pending', 'stopping']
+    }
+]
+
+# Encontrar as instâncias que têm uma AMI diferente da AMI desejada
+reservas = ec2.describe_instances(Filters=filtro_instancias)['Reservations']
+
+# Adicionar a nova tag em cada instância encontrada
+for reserva in reservas:
+    for instancia in reserva['Instances']:
+        id_instancia = instancia['InstanceId']
+        ec2.create_tags(Resources=[id_instancia], Tags=[nova_tag])
