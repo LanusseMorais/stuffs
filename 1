@@ -30,3 +30,50 @@ for reserva in reservas:
     for instancia in reserva['Instances']:
         id_instancia = instancia['InstanceId']
         ec2.create_tags(Resources=[id_instancia], Tags=[nova_tag])
+
+
+
+##########td
+import boto3
+
+# Definir o cliente do boto3 para o SSM
+ssm = boto3.client('ssm')
+
+# Definir o ID da instância onde o td-agent está sendo executado
+instance_id = 'INSTANCE_ID'
+
+# Definir o comando de teste que será executado na instância
+test_command = 'sudo /usr/sbin/logrotate -v /etc/logrotate.d/td-agent'
+
+# Executar o comando de teste na instância e capturar a saída
+response = ssm.send_command(
+    InstanceIds=[instance_id],
+    DocumentName='AWS-RunShellScript',
+    Parameters={'commands': [test_command]}
+)
+command_id = response['Command']['CommandId']
+output = ''
+while True:
+    response = ssm.get_command_invocation(CommandId=command_id, InstanceId=instance_id)
+    if response['Status'] in ['Success', 'Failed']:
+        output += response['StandardOutputContent']
+        output += response['StandardErrorContent']
+        break
+
+# Verificar se o logrotate foi executado corretamente
+if 'rotating pattern' in output and 'considering log' in output and 'running postrotate script' in output:
+    print('O logrotate foi executado corretamente.')
+else:
+    print('Houve um problema ao executar o logrotate.')
+    
+# Verificar se os logs antigos foram excluídos corretamente
+if 'removing old log' in output:
+    print('Os logs antigos foram excluídos corretamente.')
+else:
+    print('Houve um problema ao excluir os logs antigos.')
+    
+# Verificar se os logs estão sendo escritos corretamente
+if 'creating new log' in output:
+    print('Os logs estão sendo escritos corretamente.')
+else:
+    print('Houve um problema ao escrever os logs.')
