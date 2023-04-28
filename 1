@@ -1,37 +1,46 @@
+Para colocar uma tag em todas as instâncias que têm o valor de AMI diferente do que está definido em uma variável e verificar se a instância já não tem a tag, você pode usar o seguinte script em Python com boto3:
+
+```python
 import boto3
 
 # Definir o cliente do boto3 para o Amazon EC2
 ec2 = boto3.client('ec2')
 
-# Definir o valor da AMI desejada
-ami_id = 'AMI_ID'
+# Definir o ID da AMI para a qual a tag será aplicada
+ami_id = 'AMI-ID'  # Substitua AMI-ID pelo ID da AMI desejada
 
-# Definir a tag que será adicionada nas instâncias
+# Definir a tag que será adicionada ou atualizada
 nova_tag = {'Key': 'Nome_da_tag', 'Value': 'Valor_da_tag'}
 
-# Definir o filtro para encontrar as instâncias que têm uma AMI diferente da AMI desejada
-filtro_instancias = [
-    {
-        'Name': 'image-id',
-        'Values': [ami_id],
-        'Operator': 'ne'
-    },
-    {
-        'Name': 'instance-state-name',
-        'Values': ['running', 'stopped', 'pending', 'stopping']
-    }
-]
+# Obter todas as instâncias que têm o valor de AMI diferente do que está definido em uma variável
+instancias = ec2.describe_instances(Filters=[
+    {'Name': 'image-id', 'Values': [ami_id,]},
+    {'Name': 'instance-state-name', 'Values': ['running', 'stopped', 'pending', 'stopping']},
+])['Reservations']
 
-# Encontrar as instâncias que têm uma AMI diferente da AMI desejada
-reservas = ec2.describe_instances(Filters=filtro_instancias)['Reservations']
-
-# Adicionar a nova tag em cada instância encontrada
-for reserva in reservas:
+# Adicionar ou atualizar a tag em cada instância que atenda aos critérios do filtro
+for reserva in instancias:
     for instancia in reserva['Instances']:
         id_instancia = instancia['InstanceId']
-        ec2.create_tags(Resources=[id_instancia], Tags=[nova_tag])
 
+        # Verificar se a instância já tem a tag
+        tags_existentes = ec2.describe_tags(
+            Filters=[
+                {'Name': 'resource-id', 'Values': [id_instancia,]},
+                {'Name': 'key', 'Values': [nova_tag['Key'],]},
+                {'Name': 'value', 'Values': [nova_tag['Value'],]}
+            ]
+        )['Tags']
 
+        # Adicionar ou atualizar a tag, se necessário
+        if not tags_existentes:
+            ec2.create_tags(Resources=[id_instancia], Tags=[nova_tag])
+            print(f"A tag {nova_tag['Key']}={nova_tag['Value']} foi adicionada na instância {id_instancia}.")
+        else:
+            print(f"A instância {id_instancia} já tem a tag {nova_tag['Key']}={nova_tag['Value']}.")
+```
+
+Este script usa a função `describe_instances` do boto3 para obter todas as instâncias que têm o valor de AMI diferente do que está definido na variável `ami_id`. Em seguida, ele usa a função `describe_tags` do boto3 para verificar se cada instância já tem a tag definida na variável `nova_tag`. Se a tag não existir, ele adiciona a tag usando a função `create_tags`. Se a tag já existir, ele imprime uma mensagem informando que a instância já tem a tag e passa para a próxima instância. Certifique-se de substituir `AMI-ID`, `Nome_da_tag` e `Valor_da_tag` pelos valores corretos para o seu caso de uso.
 
 ##########td
 import boto3
