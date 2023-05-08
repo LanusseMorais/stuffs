@@ -1,0 +1,2 @@
+sudo awk '$1=="Swap" && $2>0 {print $0}' /proc/*/smaps 2>/dev/null | awk '{sum+=$2} END {print sum/1024 " MB"}'
+sudo awk '$1=="Swap" && $2>0 {process[$5]+=$2} END {for (pid in process) print pid, process[pid]/1024 " MB"}' /proc/*/smaps 2>/dev/null | sort -rnk2 | head -n 10
