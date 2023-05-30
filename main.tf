@@ -1,3 +1,6 @@
+Peço desculpas pela confusão anterior. Para passar as configurações para a instância EC2 quando `multiplas_ec2` for falso, podemos ajustar o código do módulo da seguinte maneira:
+
+```hcl
 # modules/ec2_cluster/main.tf
 
 variable "multiplas_ec2" {
@@ -49,34 +52,34 @@ resource "aws_instance" "ec2_instance" {
   count = var.multiplas_ec2 ? var.quantidade_ec2 : 1
   ami   = "ami-12345678" # Substitua pela AMI desejada
 
-  dynamic "config" {
-    for_each = var.multiplas_ec2 ? [var.role] : []
-    content {
-      instance_type   = var.clusters_configurations[var.cluster][config.key].instance_type
-      root_block_device {
-        volume_size = var.clusters_configurations[var.cluster][config.key].root_volume_size
-      }
-
-      # Distribuir instâncias em sub-redes diferentes (se multiplas_ec2 for verdadeiro)
-      subnet_id = var.multiplas_ec2 ? element(var.subnets_ids, count.index % length(var.subnets_ids)) : var.subnets_ids[0]
-
-      # Configuração de volumes EBS
-      ebs_block_device {
-        for_each = var.clusters_configurations[var.cluster][config.key].ebs_volumes
-
-        device_name = each.value.device_name
-        volume_type = each.value.volume_type
-        volume_size = each.value.volume_size
-      }
-
-      tags = merge(
-        var.clusters_configurations[var.cluster][config.key].tags,
-        {
-          "Environment" = "production"
-          "Role"        = config.key
-          "Cluster"     = var.cluster
-        }
-      )
-    }
+  instance_type = var.clusters_configurations[var.cluster][var.role].instance_type
+  subnet_id     = var.multiplas_ec2 ? element(var.subnets_ids, count.index % length(var.subnets_ids)) : var.subnets_ids[0]
+  
+  root_block_device {
+    volume_size = var.clusters_configurations[var.cluster][var.role].root_volume_size
   }
+  
+  ebs_block_device {
+    for_each = var.clusters_configurations[var.cluster][var.role].ebs_volumes
+
+    device_name = each.value.device_name
+    volume_type = each.value.volume_type
+    volume_size = each.value.volume_size
+  }
+  
+  tags = merge(
+    var.clusters_configurations[var.cluster][var.role].tags,
+    {
+      "Environment" = "production"
+      "Role"        = var.role
+      "Cluster"     = var.cluster
+    }
+  )
 }
+```
+
+Nessa nova versão do código, eliminamos o bloco `dynamic` e definimos diretamente as configurações da instância EC2 com base nos valores das variáveis `cluster` e `role`. Assim, podemos passar as configurações corretas mesmo quando `multiplas_ec2` for falso.
+
+Certifique-se de ajustar a AMI (`ami-12345678`) para a AMI desejada e verifique se as demais configurações, como o caminho do módulo `ec2_cluster` (`source`), estão corretas para o seu caso de uso.
+
+Espero que isso resolva o problema e que o módulo funcione conforme o esperado. Se você tiver mais dúvidas, estou à disposição para ajudar!
