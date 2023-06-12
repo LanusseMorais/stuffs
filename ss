@@ -32,3 +32,6 @@ instances = ['i-0123456789abcdef0', 'i-abcdef0123456789']
 action = 'remove'  # ou 'add' para adicionar instâncias aos grupos de destino
 
 remove_instances_from_target_groups(target_groups, instances, action)
+target_groups:
+  - arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/target-group-1/abcdef1234567890
+  - arn:aws:elasticloadbalancing:us-east-1:123456789012:targetgroup/target-group-2/abcdef1234567890
