@@ -1,0 +1,21 @@
+#!/bin/bash
+
+INSTANCE_ID="$1" # ID da instância EC2
+COMMAND="$2"    # Comando ou script a ser executado
+
+output=$(aws ssm send-command \
+  --instance-ids "$INSTANCE_ID" \
+  --document-name "AWS-RunShellScript" \
+  --parameters commands="$COMMAND" \
+  --output text \
+  --query "CommandInvocation.StandardOutputContent" 2>&1)
+
+exit_code=$?
+
+if [[ $exit_code -eq 0 ]]; then
+  echo "Saída do comando:"
+  echo "$output"
+else
+  echo "Erro ao executar o comando:"
+  echo "$output"
+fi
