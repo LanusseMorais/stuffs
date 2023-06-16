@@ -1,21 +1,33 @@
-#!/bin/bash
+import boto3
+import os
+import shutil
 
-INSTANCE_ID="$1" # ID da instância EC2
-COMMAND="$2"    # Comando ou script a ser executado
+def download_files_from_s3(bucket_name, s3_folder, local_folder):
+    s3_client = boto3.client('s3')
+    
+    # Listar objetos no bucket e pasta especificados
+    response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix=s3_folder)
+    objects = response['Contents']
+    
+    # Baixar cada objeto para a pasta local
+    for obj in objects:
+        key = obj['Key']
+        local_path = os.path.join(local_folder, os.path.basename(key))
+        
+        # Baixar o arquivo do S3
+        s3_client.download_file(bucket_name, key, local_path)
+        print(f"Downloaded file: {key}")
+    
+    print("Download completed.")
 
-output=$(aws ssm send-command \
-  --instance-ids "$INSTANCE_ID" \
-  --document-name "AWS-RunShellScript" \
-  --parameters commands="$COMMAND" \
-  --output text \
-  --query "CommandInvocation.StandardOutputContent" 2>&1)
+# Configurações
+bucket_name = 'seu-bucket-s3'
+s3_folder = 'pasta-no-s3'
+local_folder = r'\\servidor\nome\caminho\para\pasta\na\rede\do\windows'
 
-exit_code=$?
+# Verificar se a pasta local existe, caso contrário, criar
+if not os.path.exists(local_folder):
+    os.makedirs(local_folder)
 
-if [[ $exit_code -eq 0 ]]; then
-  echo "Saída do comando:"
-  echo "$output"
-else
-  echo "Erro ao executar o comando:"
-  echo "$output"
-fi
+# Baixar os arquivos do S3 e salvar na pasta local
+download_files_from_s3(bucket_name, s3_folder, local_folder)
