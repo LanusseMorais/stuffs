@@ -1,0 +1,23 @@
+import boto3
+import subprocess
+
+def download_files_from_s3(bucket_name, s3_prefix):
+    s3 = boto3.client('s3')
+
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=s3_prefix)
+    objects = response['Contents']
+
+    for obj in objects:
+        s3_key = obj['Key']
+        local_file = f"Downloads\\{s3_key}"  # Caminho para a pasta Downloads no Windows
+
+        # Executa o comando cp para copiar o arquivo do S3 para a pasta local
+        subprocess.run(['cp', f"s3://{bucket_name}/{s3_key}", local_file], check=True)
+
+    print("Arquivos baixados com sucesso!")
+
+# Exemplo de uso
+bucket_name = 'seu-bucket'
+s3_prefix = 'caminho/para/os/arquivos'
+
+download_files_from_s3(bucket_name, s3_prefix)

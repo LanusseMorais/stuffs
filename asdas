@@ -1,7 +1,11 @@
 import boto3
+import subprocess
+import boto3
 import os
 import shutil
 
+def download_files_from_s3(bucket_name, s3_prefix):
+    s3 = boto3.client('s3')
 def download_files_from_s3(bucket_name, s3_folder, local_folder):
     s3_client = boto3.client('s3')
     
@@ -20,14 +24,38 @@ def download_files_from_s3(bucket_name, s3_folder, local_folder):
     
     print("Download completed.")
 
+<<<<<<< HEAD
+    response = s3.list_objects_v2(Bucket=bucket_name, Prefix=s3_prefix)
+    objects = response['Contents']
+=======
 # Configurações
 bucket_name = 'seu-bucket-s3'
 s3_folder = 'pasta-no-s3'
 local_folder = r'\\servidor\nome\caminho\para\pasta\na\rede\do\windows'
+>>>>>>> b03e1299d26e673a6d1c267fae48ffde7e573469
 
+<<<<<<< HEAD
+    for obj in objects:
+        s3_key = obj['Key']
+        local_file = f"Downloads\\{s3_key}"  # Caminho para a pasta Downloads no Windows
+=======
 # Verificar se a pasta local existe, caso contrário, criar
 if not os.path.exists(local_folder):
     os.makedirs(local_folder)
+>>>>>>> b03e1299d26e673a6d1c267fae48ffde7e573469
 
+<<<<<<< HEAD
+        # Executa o comando cp para copiar o arquivo do S3 para a pasta local
+        subprocess.run(['cp', f"s3://{bucket_name}/{s3_key}", local_file], check=True)
+=======
 # Baixar os arquivos do S3 e salvar na pasta local
 download_files_from_s3(bucket_name, s3_folder, local_folder)
+>>>>>>> b03e1299d26e673a6d1c267fae48ffde7e573469
+
+    print("Arquivos baixados com sucesso!")
+
+# Exemplo de uso
+bucket_name = 'seu-bucket'
+s3_prefix = 'caminho/para/os/arquivos'
+
+download_files_from_s3(bucket_name, s3_prefix)
